@@ -8,6 +8,7 @@ const St         = imports.gi.St;
 const PolicyType = imports.gi.Gtk.PolicyType;
 const Util       = imports.misc.util;
 const MessageTray = imports.ui.messageTray;
+const GLib        = imports.gi.GLib
 
 const Main      = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
@@ -381,6 +382,8 @@ const ClipboardIndicator = Lang.Class({
     },
 
     _onMenuItemSelected: function (autoSet) {
+        GLib.spawn_command_line_sync('killall dummy');
+
         var that = this;
         that.radioGroup.forEach(function (menuItem) {
             let clipContents = that.clipContents;
@@ -404,6 +407,7 @@ const ClipboardIndicator = Lang.Class({
     },
 
     _onMenuItemSelectedAndMenuClose: function (autoSet) {
+        GLib.spawn_command_line_sync('killall dummy');
         var that = this;
         that.radioGroup.forEach(function (menuItem) {
             let clipContents = that.clipContents;
@@ -845,6 +849,19 @@ const ClipboardIndicator = Lang.Class({
     },
 
     _toggleMenu: function(){
+        if (!this.menu.isOpen) {
+            let [, winId] = GLib.spawn_command_line_sync('xdotool getactivewindow');
+            let [, wmClass] = GLib.spawn_command_line_sync('xprop -id ' + winId + ' | grep WM_CLASS');
+            let [, ignoredApps] = GLib.spawn_command_line_sync('cat /home/thiago/.dotfiles/linux/xkeysnail/ignored_apps_on_default_mappings');
+
+          if (wmClass.toString().match(ignoredApps)) {
+              GLib.spawn_async('/', ['/home/thiago/bin/dummy'], null, GLib.SpawnFlags.SEARCH_PATH, null)
+          }
+        }
+        else {
+            GLib.spawn_command_line_sync('killall dummy');
+        }
+
         this.menu.toggle();
     }
 });
